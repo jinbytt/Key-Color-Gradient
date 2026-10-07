@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.38" stop-color="#FF8F6B" stop-opacity="0"/>
+      <stop offset="1" stop-color="#FF8F6B"/>
+    </linearGradient>
+    <clipPath id="r"><rect width="128" height="128" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="128" height="128" fill="#FFF3E6"/>
+    <rect width="128" height="128" fill="url(#g)"/>
+    <!-- 고양이 -->
+    <path d="M30 52 L34 22 L54 38 Q64 35 74 38 L94 22 L98 52 Q104 64 100 78 Q92 102 64 102 Q36 102 28 78 Q24 64 30 52 Z"
+          fill="#FFFFFF" stroke="#2A2522" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M38 34 L41 46 L48 40 Z" fill="#FFC2B0"/>
+    <path d="M90 34 L87 46 L80 40 Z" fill="#FFC2B0"/>
+    <circle cx="50" cy="66" r="4.5" fill="#2A2522"/>
+    <circle cx="78" cy="66" r="4.5" fill="#2A2522"/>
+    <circle cx="51.6" cy="64.4" r="1.4" fill="#fff"/>
+    <circle cx="79.6" cy="64.4" r="1.4" fill="#fff"/>
+    <ellipse cx="42" cy="78" rx="6" ry="4" fill="#FF9B85" opacity="0.55"/>
+    <ellipse cx="86" cy="78" rx="6" ry="4" fill="#FF9B85" opacity="0.55"/>
+    <path d="M58.5 80 L64 73.5 L69.5 80" fill="none" stroke="#2A2522" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
