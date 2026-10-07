@@ -1,0 +1,421 @@
+<style>
+  /* 항상 다크 모드 */
+  :root {
+    color-scheme: dark;
+    --bg:#1e1e1e; --panel:#252525; --fg:#f0f0f0; --sub:#9a9a9a; --line:#383838;
+    --accent:#0d99ff; --field:#2c2c2c; --ok:#3ecf8e; --err:#ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  html, body { height:100%; }
+  body { margin:0; font:12px/1.4 Inter, -apple-system, "Apple SD Gothic Neo", sans-serif; background:var(--bg); color:var(--fg); overflow:hidden; }
+  input[type=checkbox], input[type=range] { accent-color: var(--accent); }
+
+  .app { display:flex; height:100vh; }
+
+  /* ---------- 왼쪽: 설정 ---------- */
+  .panel { width:300px; flex:0 0 300px; display:flex; flex-direction:column; background:var(--panel); border-right:1px solid var(--line); }
+  .panel-head { padding:14px 14px 10px; }
+  .panel-head h1 { font-size:13px; margin:0; }
+  .panel-head .sel { color:var(--sub); margin-top:2px; }
+  .panel-body { flex:1; overflow-y:auto; padding:0 14px 14px; display:flex; flex-direction:column; gap:12px; }
+  .ver { margin-top:6px; font-size:10.5px; color:var(--sub); font-variant-numeric:tabular-nums; }
+  .ver.warn { color:var(--err); }
+  .intro { color:var(--sub); line-height:1.6; }
+  .intro b { color:var(--fg); font-weight:600; }
+  details.adv { border-top:1px solid var(--line); }
+  details.adv > summary { list-style:none; cursor:pointer; padding:12px 0 10px; display:flex; align-items:center; gap:6px; font-weight:600; user-select:none; }
+  details.adv > summary::-webkit-details-marker { display:none; }
+  details.adv > summary::after { content:""; margin-left:auto; width:6px; height:6px; border-right:1.5px solid var(--sub); border-bottom:1.5px solid var(--sub); transform:rotate(45deg); transition:transform .15s; }
+  details.adv[open] > summary::after { transform:rotate(-135deg); }
+  .sum-text { display:flex; flex-direction:column; gap:3px; }
+  .sum-text small.cfg { color:var(--accent); }
+  .sum-text small.cfg.warn { color:var(--err); }
+  .sum-text small { font-size:10.5px; font-weight:400; color:var(--sub); line-height:1.45; }
+  details.adv > summary::after { align-self:flex-start; margin-top:5px; flex:0 0 auto; }
+  .adv-body { display:flex; flex-direction:column; gap:12px; padding-bottom:4px; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--sub); font-weight:500; }
+  button.ghost:hover { color:var(--fg); }
+  .panel-foot { padding:12px 14px; border-top:1px solid var(--line); }
+
+  .group { border-top:1px solid var(--line); padding-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .group > b { font-size:11px; color:var(--sub); font-weight:600; }
+  .row { display:flex; align-items:center; gap:8px; }
+  .row label { flex:0 0 84px; }
+  .row input[type=text] { flex:1; min-width:0; padding:5px 7px; border:1px solid var(--line); border-radius:4px; background:var(--field); color:var(--fg); font:inherit; }
+  .row input[type=range] { flex:1; min-width:0; }
+  .row output { flex:0 0 34px; text-align:right; font-variant-numeric:tabular-nums; color:var(--sub); }
+  .row input[type=color] { flex:0 0 28px; width:28px; height:24px; padding:0; border:1px solid var(--line); border-radius:4px; background:none; cursor:pointer; }
+  .row input.hexin { font-variant-numeric:tabular-nums; text-transform:uppercase; }
+  .check { display:flex; align-items:center; gap:6px; }
+  .hint { color:var(--sub); font-size:11px; }
+  button { width:100%; padding:9px; border:0; border-radius:6px; background:var(--accent); color:#fff; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.45; cursor:default; }
+
+  /* ---------- 오른쪽: 미리보기 ---------- */
+  .preview { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .preview-head { padding:14px 16px 10px; display:flex; align-items:baseline; gap:8px; }
+  .preview-head h2 { font-size:13px; margin:0; }
+  .preview-head .hint { margin-left:auto; }
+  .grid { flex:1; overflow-y:auto; padding:0 16px 16px; display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; align-content:start; }
+
+  .tile { cursor:pointer; }
+  .thumb { position:relative; border-radius:10px; overflow:hidden; background:#333; }
+  .thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb .layer, .thumb .overlay { position:absolute; display:block; }
+  .thumb .mask { -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
+  .meta .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .badge { position:absolute; top:8px; right:8px; padding:2px 6px; border-radius:10px; font-size:10px; font-weight:600; background:rgba(0,0,0,.55); color:#fff; }
+  .badge.ok { background:var(--ok); color:#06210f; }
+  .meta { display:flex; align-items:center; gap:6px; margin-top:6px; color:var(--sub); font-size:11px; }
+  .sw { width:12px; height:12px; border-radius:3px; border:1px solid rgba(255,255,255,.15); flex:0 0 auto; }
+  .meta .mode { margin-left:auto; flex:0 0 auto; }
+  .meta .hex { flex:0 0 auto; font-variant-numeric:tabular-nums; }
+  .tile.error .thumb { display:flex; align-items:center; justify-content:center; padding:12px; text-align:center; color:var(--err); aspect-ratio:3/4; }
+  .tile.loading .thumb { aspect-ratio:3/4; }
+
+  .empty { grid-column:1 / -1; margin-top:80px; text-align:center; color:var(--sub); line-height:1.7; }
+  .more { grid-column:1 / -1; color:var(--sub); text-align:center; padding:6px; }
+</style>
+
+<div class="app">
+  <aside class="panel">
+    <div class="panel-head">
+      <h1>Key Color Gradient</h1>
+      <div class="sel" id="sel">선택된 카드 0개</div>
+      <div class="ver" id="ver"></div>
+    </div>
+
+    <div class="panel-body">
+      <div class="intro">카드를 선택하고 <b>적용</b>을 누르면 이미지에서 색을 뽑아 그라데이션과 글자색을 맞춰요.</div>
+
+      <details class="adv" id="adv">
+        <summary><span class="sum-text">세부 조정<small>시안 확인용이에요. 여기서 바꾼 값은 플러그인을 닫으면 사라지고, 실제 서비스의 색상 추출 코드에는 반영되지 않아요.</small><small class="cfg" id="cfgStatus">기준값 불러오는 중…</small></span></summary>
+        <div class="adv-body">
+      <div class="group">
+        <b>레이어 이름</b>
+        <div class="row"><label>이미지</label><input type="text" id="imageName"></div>
+        <div class="row"><label>그라데이션</label><input type="text" id="gradientName"></div>
+        <div class="hint">이름이 맞는 레이어가 없으면 가장 큰 이미지를 쓰고, 그라데이션 레이어는 새로 만들어요.</div>
+      </div>
+
+      <div class="group">
+        <b>배경색이 명확한 이미지</b>
+        <label class="check"><input type="checkbox" id="bgMode"> 배경색을 따르고 채도 살짝 올리기</label>
+        <div class="row"><label>배경 판정 기준</label><input type="range" id="bgThreshold" min="0.4" max="0.95" step="0.05"><output></output></div>
+        <div class="row"><label>채도 올리기</label><input type="range" id="tint" min="0" max="0.06" step="0.002"><output></output></div>
+        <div class="hint">가장자리의 이 비율 이상이 한 색이면 배경색으로 봐요. 흰 배경이면 그림의 대표 색 쪽으로 물들여요.</div>
+      </div>
+
+      <div class="group">
+        <b>보정 (OKLCH)</b>
+        <div class="row"><label>최소 밝기</label><input type="range" id="minL" min="0.2" max="0.8" step="0.01"><output></output></div>
+        <div class="row"><label>최대 밝기</label><input type="range" id="maxL" min="0.6" max="0.97" step="0.01"><output></output></div>
+        <div class="row"><label>최대 채도</label><input type="range" id="maxC" min="0.02" max="0.2" step="0.005"><output></output></div>
+        <div class="row"><label>선명한 색 우선</label><input type="range" id="vivid" min="0" max="1" step="0.05"><output></output></div>
+      </div>
+
+      <div class="group">
+        <b>그라데이션</b>
+        <div class="row"><label>시작 위치</label><input type="range" id="start" min="0" max="0.9" step="0.01"><output></output></div>
+        <div class="row"><label>끝 위치</label><input type="range" id="end" min="0.1" max="1" step="0.01"><output></output></div>
+        <label class="check"><input type="checkbox" id="createIfMissing"> 그라데이션 레이어가 없으면 만들기</label>
+        <label class="check"><input type="checkbox" id="paintBg"> 카드 배경도 같은 색으로 칠하기</label>
+        <label class="check"><input type="checkbox" id="paintText"> 텍스트 색 자동</label>
+        <div class="row"><label>밝은 글자색</label><input type="color" id="textLight"><input type="text" class="hexin" data-for="textLight"></div>
+        <div class="row"><label>흰 글자 기준</label><input type="range" id="whiteMin" min="3" max="7" step="0.1"><output></output></div>
+        <div class="row"><label>어두운 글자색</label><input type="color" id="textDark"><input type="text" class="hexin" data-for="textDark"></div>
+        <div class="row"><label>검정 목표 대비</label><input type="range" id="darkTarget" min="3" max="10" step="0.1"><output></output></div>
+        <div class="row"><label>검정 100% 밝기</label><input type="range" id="solidBlackL" min="0.8" max="1" step="0.01"><output></output></div>
+        <div class="row"><label>최소 불투명도</label><input type="range" id="darkMinAlpha" min="0.3" max="1" step="0.05"><output></output></div>
+        <div class="hint">흰 글자로 대비가 기준 이상이면 흰색이에요. 흰 배경처럼 카드 밝기가 "검정 100% 밝기" 이상이면 검정 100%, 그 사이 중간 톤은 검정에 투명도를 넣어 목표 대비에 맞춰요.</div>
+        <div class="hint">시작·끝 위치는 그라데이션 레이어를 새로 만들 때만 써요. 이미 있으면 그 레이어의 위치·투명도는 그대로 두고 색만 바꿔요.</div>
+      </div>
+      <button type="button" class="ghost" id="reset">GitHub 기준값으로 되돌리기</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel-foot">
+      <button id="apply" disabled>카드를 선택해 주세요</button>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="preview-head">
+      <h2>미리보기</h2>
+      <span class="hint" id="previewHint">설정을 움직이면 바로 바뀌어요</span>
+    </div>
+    <div class="grid" id="grid">
+      <div class="empty">Figma에서 카드를 선택하면<br>여기에 미리보기가 떠요</div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ================= 공용 색 로직 (color-logic.js가 빌드 때 여기에 들어가요) =================
+/*__COLOR_LOGIC__*/
+const { precompute, hexToRgb } = ColorLogic;
+const computeColors = (pre, s) => ColorLogic.compute(pre, s);
+
+// ================= 이미지 → 픽셀 (브라우저 canvas) =================
+async function decode(bytes) {
+  const bmp = await createImageBitmap(new Blob([bytes]));
+  const size = ColorLogic.ANALYZE_SIZE, scale = Math.min(1, size / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d");
+  ctx.drawImage(bmp, 0, 0, w, h);
+  return ColorLogic.pixelsFromRGBA(ctx.getImageData(0, 0, w, h).data, w, h);
+}
+
+// ================= 캐시 (카드 id → 이미지/계산 결과) =================
+const cache = {}; // id → { hash, url, pre }
+
+async function ensureCache(id, hash, bytes) {
+  const hit = cache[id];
+  if (hit && hit.hash === hash) return hit;
+  if (hit && hit.url) URL.revokeObjectURL(hit.url);
+  const pre = precompute(await decode(bytes));
+  const url = URL.createObjectURL(new Blob([bytes]));
+  return (cache[id] = { hash, url, pre });
+}
+
+// ================= UI =================
+const $ = id => document.getElementById(id);
+const fields = ["imageName", "gradientName", "textDark", "textLight", "whiteMin", "darkTarget", "darkMinAlpha", "solidBlackL", "minL", "maxL", "maxC", "vivid", "bgThreshold", "tint", "start", "end"];
+const checks = ["bgMode", "createIfMissing", "paintBg", "paintText"];
+let selCount = 0, busy = false;
+let previewCards = [], previewTotal = 0, applied = {};
+
+function readSettings() {
+  const s = {};
+  fields.forEach(f => { const el = $(f); s[f] = el.type === "range" ? parseFloat(el.value) : el.value.trim(); });
+  checks.forEach(f => s[f] = $(f).checked);
+  return s;
+}
+function syncOutputs() {
+  document.querySelectorAll("input[type=range]").forEach(el => el.nextElementSibling.textContent = el.value);
+  document.querySelectorAll(".hexin").forEach(el => { if (document.activeElement !== el) el.value = $(el.dataset.for).value.toUpperCase(); });
+}
+function updateButton() {
+  $("apply").disabled = busy || selCount === 0;
+  $("apply").textContent = busy ? "적용 중…" : selCount ? `선택한 카드 ${selCount}개에 적용` : "카드를 선택해 주세요";
+}
+
+const hex = ({ r, g, b }) => "#" + [r, g, b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join("");
+const rgba = ({ r, g, b }, a) => `rgba(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)},${a})`;
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---- 미리보기 그리기 ----
+let layerUrls = [];
+const pct = v => (v * 100).toFixed(3) + "%";
+const box = l => `left:${pct(l.x)};top:${pct(l.y)};width:${pct(l.w)};height:${pct(l.h)}`;
+
+function layerHtml(l) {
+  const url = URL.createObjectURL(new Blob([l.png], { type: "image/png" }));
+  layerUrls.push(url);
+  if (!l.isText) return `<img class="layer" src="${url}" style="${box(l)}" alt="">`;
+  // 텍스트는 원래 색(img)과 "텍스트 색 자동"용 마스크(div)를 둘 다 두고 설정에 따라 바꿔 보여준다
+  return `<img class="layer text-orig" src="${url}" style="${box(l)}" alt="">
+          <div class="layer mask text-auto" style="${box(l)};-webkit-mask-image:url(${url});mask-image:url(${url})" hidden></div>`;
+}
+
+function renderGrid() {
+  layerUrls.forEach(u => URL.revokeObjectURL(u));
+  layerUrls = [];
+  const grid = $("grid");
+  if (!previewCards.length) {
+    grid.innerHTML = `<div class="empty">Figma에서 카드를 선택하면<br>여기에 미리보기가 떠요</div>`;
+    return;
+  }
+  grid.innerHTML = previewCards.map(c => {
+    if (c.error) return `<div class="tile error" data-id="${c.id}"><div class="thumb">${esc(c.error)}</div><div class="meta"><span class="name">${esc(c.name)}</span></div></div>`;
+    if (!cache[c.id] || cache[c.id].hash !== c.hash) return `<div class="tile loading" data-id="${c.id}"><div class="thumb"></div><div class="meta">불러오는 중…</div></div>`;
+    const ratio = Math.min(2, Math.max(0.4, c.w / c.h));
+    const hasLayers = c.below || c.above;
+    const base = !hasLayers || c.imageIsCard
+      ? `<img class="layer" src="${cache[c.id].url}" style="left:0;top:0;width:100%;height:100%;object-fit:cover" alt="">` : "";
+    return `<div class="tile" data-id="${c.id}">
+      <div class="thumb" style="aspect-ratio:${ratio}">
+        ${base}
+        ${(c.below || []).map(layerHtml).join("")}
+        <div class="overlay" style="${box(c.area || { x: 0, y: 0, w: 1, h: 1 })}"></div>
+        ${(c.above || []).map(layerHtml).join("")}
+        <span class="badge" hidden></span>
+      </div>
+      <div class="meta"><span class="sw key"></span>→<span class="sw out"></span><span class="hex"></span><span class="mode"></span></div>
+      <div class="meta"><span class="tx"></span></div>
+      <div class="meta"><span class="name">${esc(c.name)}</span>${c.areaExists ? "" : `<span class="mode">새로 만듦</span>`}</div>
+    </div>`;
+  }).join("") + (previewTotal > previewCards.length ? `<div class="more">외 ${previewTotal - previewCards.length}개는 미리보기에서 생략했어요 (적용은 전부 돼요)</div>` : "");
+  grid.querySelectorAll(".tile").forEach(el =>
+    el.onclick = () => parent.postMessage({ pluginMessage: { type: "focus", id: el.dataset.id } }, "*"));
+  updateColors();
+}
+
+function gradientCss(c, color, s) {
+  const area = c.area || {};
+  if (area.stops) { // 기존 레이어: 방향·위치·투명도 유지, 색만 교체
+    const stops = area.stops.map(st => `${rgba(color, st.a)} ${(st.position * 100).toFixed(1)}%`).join(", ");
+    return `linear-gradient(${area.angle.toFixed(1)}deg, ${stops})`;
+  }
+  const start = Math.round(s.start * 100), end = Math.round(Math.max(s.end, s.start) * 100);
+  return `linear-gradient(to bottom, ${rgba(color, 0)} ${start}%, ${rgba(color, 1)} ${end}%)`;
+}
+
+// 설정이 바뀔 때마다 색만 다시 칠한다 (이미지·레이어는 그대로)
+function updateColors() {
+  const s = readSettings();
+  const byId = {};
+  previewCards.forEach(c => byId[c.id] = c);
+  document.querySelectorAll(".tile[data-id]").forEach(el => {
+    const entry = cache[el.dataset.id], c = byId[el.dataset.id];
+    if (!entry || !c || el.classList.contains("error") || el.classList.contains("loading")) return;
+    const r = computeColors(entry.pre, s);
+    el.querySelector(".overlay").style.background = gradientCss(c, r.corrected, s);
+    el.querySelector(".thumb").style.background = s.paintBg ? hex(r.corrected) : (c.bgColor ? hex(c.bgColor) : "#333");
+    el.querySelectorAll(".text-orig").forEach(n => n.hidden = s.paintText);
+    el.querySelectorAll(".text-auto").forEach(n => { n.hidden = !s.paintText; n.style.background = rgba(r.text, r.textAlpha); });
+    el.querySelector(".hex").textContent = hex(r.corrected);
+    el.querySelector(".tx").textContent = r.textAlpha < 1 ? `글자 ${Math.round(r.textAlpha * 100)}%` : (r.text.r > 0.5 ? "흰 글자" : "글자 100%");
+    el.querySelector(".sw.key").style.background = hex(r.key);
+    el.querySelector(".sw.out").style.background = hex(r.corrected);
+    el.querySelector(".meta .mode").textContent = r.mode === "bg" ? "배경" : "키컬러";
+    const badge = el.querySelector(".badge"), res = applied[el.dataset.id];
+    badge.hidden = !res;
+    if (res) { badge.textContent = res.error ? "실패" : "적용됨"; badge.className = "badge" + (res.error ? "" : " ok"); badge.title = res.error || ""; }
+  });
+}
+
+let raf = 0;
+document.addEventListener("input", e => {
+  if (e.target.classList.contains("hexin")) { // HEX 직접 입력 → 컬러 피커에 반영
+    const v = e.target.value.trim(), ok = /^#?[0-9a-f]{6}$/i.test(v);
+    if (!ok) return;
+    $(e.target.dataset.for).value = (v[0] === "#" ? v : "#" + v).toLowerCase();
+  }
+  syncOutputs();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(updateColors);
+  if (e.target.id === "imageName" || e.target.id === "gradientName") {
+    clearTimeout(window._nameTimer);
+    window._nameTimer = setTimeout(() => parent.postMessage({ pluginMessage: {
+      type: "names", imageName: $("imageName").value.trim(), gradientName: $("gradientName").value.trim() } }, "*"), 400);
+  }
+});
+
+// ---- GitHub 설정 파일 ----
+// 이 주소의 color-config.json이 기준값이에요. 숫자를 바꾸려면 GitHub에서 이 파일만 고치면 돼요.
+const CONFIG_URL = "https://raw.githubusercontent.com/jinbytt/Key-Color-Gradient/main/color-config.json";
+const RULE_KEYS = Object.keys(ColorLogic.DEFAULT_CONFIG);
+
+function setRuleValues(cfg) {
+  RULE_KEYS.forEach(k => {
+    const el = $(k);
+    if (!el || cfg[k] == null) return;
+    if (el.type === "checkbox") el.checked = !!cfg[k]; else el.value = cfg[k];
+  });
+  syncOutputs();
+  updateColors();
+}
+
+async function loadConfig() {
+  const st = $("cfgStatus");
+  st.className = "cfg"; st.textContent = "기준값 불러오는 중…";
+  try {
+    const res = await fetch(CONFIG_URL + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const cfg = await res.json();
+    setRuleValues(ColorLogic.withDefaults(cfg));
+    configVersion = cfg.version || "?";
+    st.textContent = "기준값: GitHub color-config.json";
+    showVersion(cfg);
+  } catch (err) {
+    setRuleValues(ColorLogic.DEFAULT_CONFIG);
+    configVersion = null;
+    st.className = "cfg warn";
+    st.textContent = "GitHub 설정을 못 불러와서 플러그인 기본값을 쓰고 있어요";
+    showVersion(null);
+  }
+}
+
+let configVersion = null;
+
+// 버전 표시: 플러그인(로직) 버전 · 설정 버전
+// 레포의 logicVersion과 플러그인 로직 버전이 다르면 → 플러그인을 업데이트해야 한다고 알려줘요
+function showVersion(cfg) {
+  const el = $("ver");
+  const mine = ColorLogic.VERSION;
+  if (!cfg) {
+    el.className = "ver warn";
+    el.textContent = `로직 v${mine} · 설정 확인 불가 (오프라인)`;
+    return;
+  }
+  const outdated = cfg.logicVersion && cfg.logicVersion !== mine;
+  el.className = "ver" + (outdated ? " warn" : "");
+  el.textContent = outdated
+    ? `플러그인 업데이트 필요 · 내 로직 v${mine} / 레포 v${cfg.logicVersion}`
+    : `로직 v${mine} · 설정 ${cfg.version || "버전 없음"} · 최신`;
+  el.title = "로직 버전은 color-logic.js, 설정 버전은 color-config.json의 version이에요";
+}
+
+$("reset").onclick = () => loadConfig();
+
+$("apply").onclick = () => {
+  busy = true; updateButton();
+  parent.postMessage({ pluginMessage: { type: "apply", settings: readSettings() } }, "*");
+};
+
+window.onmessage = async e => {
+  const msg = e.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === "settings") { // 이 컴퓨터에 저장된 값 (레이어 이름, 체크박스)만 들어와요
+    Object.keys(msg.settings).forEach(k => {
+      const el = $(k);
+      if (!el || RULE_KEYS.includes(k)) return;
+      if (el.type === "checkbox") el.checked = !!msg.settings[k]; else el.value = msg.settings[k];
+    });
+    syncOutputs();
+    updateColors();
+  }
+  if (msg.type === "selection") {
+    selCount = msg.count;
+    $("sel").textContent = `선택된 카드 ${selCount}개`;
+    updateButton();
+  }
+  if (msg.type === "preview") {
+    previewCards = msg.cards; previewTotal = msg.total; if (!msg.keepStatus) applied = {};
+    renderGrid(); // 먼저 "불러오는 중" 표시
+    for (const c of previewCards) {
+      if (c.error || !c.bytes) continue;
+      try { await ensureCache(c.id, c.hash, c.bytes); }
+      catch (err) { c.error = err.message || String(err); }
+    }
+    if (previewCards === msg.cards) renderGrid(); // 그 사이 선택이 안 바뀌었을 때만
+  }
+  if (msg.type === "progress") {
+    $("apply").textContent = `적용 중… ${msg.done + 1}/${msg.total}`;
+  }
+  if (msg.type === "analyze") {
+    let result;
+    try {
+      const entry = await ensureCache(msg.id, msg.hash, msg.bytes);
+      result = computeColors(entry.pre, msg.settings);
+    } catch (err) { result = { error: err.message || String(err) }; }
+    parent.postMessage({ pluginMessage: { type: "analyzed", id: msg.id, result } }, "*");
+  }
+  if (msg.type === "results") {
+    busy = false; updateButton();
+    applied = {};
+    msg.results.forEach(r => applied[r.id] = r);
+    updateColors();
+  }
+};
+
+setRuleValues(ColorLogic.DEFAULT_CONFIG);
+loadConfig();
+parent.postMessage({ pluginMessage: { type: "ready" } }, "*");
+</script>

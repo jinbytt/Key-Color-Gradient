@@ -1,0 +1,9 @@
+{
+  "name": "key-color-gradient-server-example",
+  "private": true,
+  "description": "상품 이미지에서 카드 색을 뽑는 서버 예시",
+  "main": "extract-color.js",
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}

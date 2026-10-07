@@ -1,0 +1,13 @@
+{
+  "name": "Key Color Gradient",
+  "id": "key-color-gradient-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["https://raw.githubusercontent.com"],
+    "reasoning": "GitHub에 있는 색 보정 설정 파일(color-config.json)을 읽어 와요."
+  }
+}

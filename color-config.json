@@ -1,0 +1,23 @@
+{
+  "version": "2026-10-07.1",
+  "logicVersion": "1.0.0",
+
+  "bgMode": true,
+  "bgThreshold": 0.7,
+  "tint": 0.02,
+
+  "minL": 0.4,
+  "maxL": 0.88,
+  "maxC": 0.2,
+  "vivid": 0.5,
+
+  "textLight": "#ffffff",
+  "whiteMin": 4,
+  "textDark": "#000000",
+  "darkTarget": 4.5,
+  "solidBlackL": 0.9,
+  "darkMinAlpha": 0.7,
+
+  "start": 0.45,
+  "end": 0.75
+}
